@@ -21,27 +21,32 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up vcpkg
-      uses: microsoft/vcpkg-action@v2
-      with:
-        vcpkgDirectory: ${{ env.VCPKG_ROOT }}
+    # Step 1: Set up vcpkg manually
+    - name: Install vcpkg
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT}
+        ./vcpkg/bootstrap-vcpkg.sh  # For Linux/MacOS, use bootstrap-vcpkg.bat for Windows
 
+    # Step 2: Set up MSBuild
     - name: Set up MSBuild
       uses: microsoft/setup-msbuild@v2
       with:
-        vs-version: '[16.9]'
-
+        vs-version: '16.9'  # Ensure you're using Visual Studio 16.9
+    
+    # Step 3: Install dependencies with vcpkg
     - name: Install dependencies with vcpkg
       run: |
-        ./vcpkg install <your-package-list> # List your dependencies here
+        ./vcpkg install <your-package-list>  # List your dependencies here
         ./vcpkg integrate install
 
+    # Step 4: Configure CMake
     - name: Configure CMake
       run: |
         mkdir build
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 16 2019" ..
       
+    # Step 5: Build project with MSBuild
     - name: Build project
       run: |
         cd build
