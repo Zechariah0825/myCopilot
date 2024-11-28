@@ -21,33 +21,28 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Set up Visual Studio 2019 16.9
-    - name: Set up Visual Studio 2019 16.9
-      uses: microsoft/setup-msbuild@v2
-      with:
-        vs-version: '16.9'  # 使用 Visual Studio 16.9 版本
-    
-    # Set up vcpkg
     - name: Set up vcpkg
       uses: microsoft/vcpkg-action@v2
       with:
         vcpkgDirectory: ${{ env.VCPKG_ROOT }}
-        
-    # Install dependencies with vcpkg
+
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v2
+      with:
+        vs-version: '[16.9]'
+
     - name: Install dependencies with vcpkg
       run: |
-        ./vcpkg install <your-package-list>  # 替换为你需要的依赖包
+        ./vcpkg install <your-package-list> # List your dependencies here
         ./vcpkg integrate install
 
-    # Configure CMake
     - name: Configure CMake
       run: |
         mkdir build
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 16 2019" ..
-        
-    # Build project using MSBuild
-    - name: Build project using MSBuild
+      
+    - name: Build project
       run: |
         cd build
         msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} ${env.SOLUTION_FILE_PATH}
