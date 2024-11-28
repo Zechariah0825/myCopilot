@@ -9,7 +9,7 @@ on:
 env:
   SOLUTION_FILE_PATH: .
   BUILD_CONFIGURATION: Release
-  VCPKG_ROOT: ${{ github.workspace }}/vcpkg  # 指定 VCPKG_ROOT 为 vcpkg 文件夹
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
 
 permissions:
   contents: read
@@ -21,33 +21,37 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Step 1: Clone vcpkg repository
+    # Step 1: Clean and clone vcpkg repository
     - name: Install vcpkg
       run: |
-        git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT}  # 克隆 vcpkg 仓库
-        & "${VCPKG_ROOT}\\bootstrap-vcpkg.bat"  # 使用双反斜杠调用 Windows 批处理文件
+        if (Test-Path "${GITHUB_WORKSPACE}\\vcpkg") {
+          Remove-Item -Recurse -Force "${GITHUB_WORKSPACE}\\vcpkg"  # 删除已存在的 vcpkg 文件夹
+        }
+        git clone https://github.com/Microsoft/vcpkg.git ${GITHUB_WORKSPACE}/vcpkg  # 克隆 vcpkg 仓库
+        cd ${GITHUB_WORKSPACE}/vcpkg
+        .\bootstrap-vcpkg.bat  # 初始化 vcpkg
 
     # Step 2: Install dependencies with vcpkg
     - name: Install dependencies with vcpkg
       run: |
-        & "${VCPKG_ROOT}\\vcpkg" install webview2 fmt simpleini  # 安装 WebView2, fmt 和 simpleini
-        & "${VCPKG_ROOT}\\vcpkg" integrate install  # 集成 vcpkg
+        cd ${GITHUB_WORKSPACE}/vcpkg
+        .\vcpkg install azure-iot-sdk-c:x64-windows  # 安装 azure-iot-sdk-c 库
+        .\vcpkg --triplet x64-windows integrate install  # 集成 vcpkg
 
     # Step 3: Set up MSBuild and Visual Studio 16.9
     - name: Set up MSBuild
       uses: microsoft/setup-msbuild@v2
       with:
-        vs-version: '16.9'  # 使用 Visual Studio 16.9 版本
-    
-    # Step 4: Configure CMake
+        vs-version: '16.9'
+
+    # Step 4: Configure CMake and Build
     - name: Configure CMake
       run: |
         mkdir build
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 16 2019" ..
-      
-    # Step 5: Build project with MSBuild
-    - name: Build project
+        
+    - name: Build with MSBuild
       run: |
         cd build
         msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} ${env.SOLUTION_FILE_PATH}
