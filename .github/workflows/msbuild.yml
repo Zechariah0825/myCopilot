@@ -25,13 +25,13 @@ jobs:
     - name: Install vcpkg
       run: |
         git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT}
-        ${VCPKG_ROOT}\bootstrap-vcpkg.bat  # 使用 .bat 文件初始化 vcpkg
+        "${VCPKG_ROOT}/bootstrap-vcpkg.bat"  # 使用正确的路径分隔符
 
     # Step 2: Install dependencies with vcpkg
     - name: Install dependencies with vcpkg
       run: |
-        ${VCPKG_ROOT}\vcpkg install webview2 fmt simpleini  # 安装 WebView2, fmt 和 simpleini
-        ${VCPKG_ROOT}\vcpkg integrate install
+        "${VCPKG_ROOT}/vcpkg" install webview2 fmt simpleini  # 安装 WebView2, fmt 和 simpleini
+        "${VCPKG_ROOT}/vcpkg" integrate install
 
     # Step 3: Set up MSBuild and Visual Studio 16.9
     - name: Set up MSBuild
