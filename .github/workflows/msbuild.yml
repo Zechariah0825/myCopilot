@@ -9,49 +9,47 @@ on:
 env:
   SOLUTION_FILE_PATH: .
   BUILD_CONFIGURATION: Release
-  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg  # 指定 vcpkg 的路径
 
 permissions:
   contents: read
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-latest  # 使用 GitHub 提供的 Windows 最新环境
 
     steps:
+    # Step 1: Checkout code
     - uses: actions/checkout@v4
 
-    # Step 1: Clean and clone vcpkg repository
-    - name: Install vcpkg
+    # Step 2: Clone vcpkg repository
+    - name: Clone vcpkg repository
       run: |
-        if (Test-Path "${GITHUB_WORKSPACE}\\vcpkg") {
-          Remove-Item -Recurse -Force "${GITHUB_WORKSPACE}\\vcpkg"  # 删除已存在的 vcpkg 文件夹
-        }
-        git clone https://github.com/Microsoft/vcpkg.git ${GITHUB_WORKSPACE}/vcpkg  # 克隆 vcpkg 仓库
-        cd ${GITHUB_WORKSPACE}/vcpkg
-        .\bootstrap-vcpkg.bat  # 初始化 vcpkg
+        git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT}  # 克隆 vcpkg 仓库
+        & "${VCPKG_ROOT}\\bootstrap-vcpkg.bat"  # 初始化 vcpkg
 
-    # Step 2: Install dependencies with vcpkg
-    - name: Install dependencies with vcpkg
+    # Step 3: Install dependencies using vcpkg
+    - name: Install dependencies using vcpkg
       run: |
-        cd ${GITHUB_WORKSPACE}/vcpkg
-        .\vcpkg install azure-iot-sdk-c:x64-windows  # 安装 azure-iot-sdk-c 库
-        .\vcpkg --triplet x64-windows integrate install  # 集成 vcpkg
+        & "${VCPKG_ROOT}\\vcpkg" install webview2 fmt simpleini  # 安装依赖库
+        & "${VCPKG_ROOT}\\vcpkg" integrate install  # 集成 vcpkg
 
-    # Step 3: Set up MSBuild and Visual Studio 16.9
-    - name: Set up MSBuild
+    # Step 4: Set up MSBuild with Visual Studio 16.9
+    - name: Set up MSBuild with Visual Studio 16.9
       uses: microsoft/setup-msbuild@v2
       with:
-        vs-version: '16.9'
+        vs-version: '16.0'
 
-    # Step 4: Configure CMake and Build
+    # Step 5: Configure CMake
     - name: Configure CMake
       run: |
         mkdir build
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 16 2019" ..
-        
-    - name: Build with MSBuild
+        # 配置 CMake，指定 vcpkg 工具链文件，并选择 Visual Studio 2019 生成器
+
+    # Step 6: Build project
+    - name: Build project
       run: |
         cd build
         msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} ${env.SOLUTION_FILE_PATH}
