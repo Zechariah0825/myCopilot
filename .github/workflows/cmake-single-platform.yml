@@ -19,10 +19,21 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up CMake
+    - name: Set up dependencies
       run: |
+        # 更新 apt 包索引并安装必要的工具
         sudo apt-get update
-        sudo apt-get install -y cmake build-essential
+        sudo apt-get install -y cmake build-essential wget
+
+        # 下载 unofficial-webview2
+        wget https://github.com/webview/webview/releases/download/v0.9.0/webview2-linux.tar.gz -O /tmp/webview2.tar.gz
+
+        # 解压到合适的目录
+        mkdir -p $HOME/webview2
+        tar -xzvf /tmp/webview2.tar.gz -C $HOME/webview2
+
+        # 设置 CMAKE_PREFIX_PATH 环境变量
+        echo "CMAKE_PREFIX_PATH=$HOME/webview2" >> $GITHUB_ENV
 
     - name: Configure CMake
       run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
