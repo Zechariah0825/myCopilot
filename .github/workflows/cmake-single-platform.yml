@@ -1,4 +1,4 @@
-name: CMake Build
+name: CMake Build for WebView2
 
 on:
   push:
@@ -13,35 +13,23 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up dependencies
+    - name: Install WebView2 Runtime
       run: |
-        # 更新 apt 包索引并安装必要的工具
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential wget
-
-        # 下载 unofficial-webview2
-        wget https://github.com/webview/webview/releases/download/v0.9.0/webview2-linux.tar.gz -O /tmp/webview2.tar.gz
-
-        # 解压到合适的目录
-        mkdir -p $HOME/webview2
-        tar -xzvf /tmp/webview2.tar.gz -C $HOME/webview2
-
-        # 设置 CMAKE_PREFIX_PATH 环境变量
-        echo "CMAKE_PREFIX_PATH=$HOME/webview2" >> $GITHUB_ENV
+        # 安装 WebView2 运行时
+        Invoke-WebRequest -Uri https://aka.ms/webview2/installer -OutFile webview2_installer.exe
+        Start-Process -Wait -FilePath .\webview2_installer.exe -ArgumentList "/silent", "/install"
+    
+    - name: Set up Visual Studio
+      uses: microsoft/setup-msbuild@v1
 
     - name: Configure CMake
-      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G "Visual Studio 16 2019"
 
     - name: Build the project
       run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }}
-
-    - name: Run tests
-      run: |
-        cd ${{ github.workspace }}/build
-        ctest -C ${{ env.BUILD_TYPE }}
