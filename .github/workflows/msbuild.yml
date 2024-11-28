@@ -9,18 +9,27 @@ on:
       - main
 
 env:
-  # 配置构建类型 (Release 或 Debug)
-  BUILD_TYPE: Release  # 可以根据需求改为 Debug
+  BUILD_TYPE: Release  # 可以改成 Debug
 
 permissions:
   contents: read
 
 jobs:
   build:
-    runs-on: windows-latest  # 使用预配置的 Windows 环境，默认配备 MSVC 和相关工具
+    runs-on: windows-latest  # 使用 Windows 环境
 
     steps:
     - uses: actions/checkout@v4  # 检出代码
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2  # 将 MSBuild 添加到 PATH
+      with:
+        vs-version: '2019'  # 指定 Visual Studio 版本为 2019
+
+    - name: Install Visual Studio Build Tools (if needed)
+      run: |
+        # 安装 Visual Studio Build Tools，确保安装 C++ 开发工具集
+        choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended --quiet --norestart"
 
     - name: Set up vcpkg
       run: |
@@ -29,15 +38,8 @@ jobs:
         cd vcpkg
         # 安装 vcpkg 并初始化
         ./bootstrap-vcpkg.bat
-        # 安装您需要的第三方库（例如：webview2, simpleini, fmt）
+        # 安装所需的第三方库（webview2, simpleini, fmt）
         ./vcpkg install webview2 simpleini fmt
-
-    - name: Set up Visual Studio with C++ Build Tools
-      uses: microsoft/setup-msbuild@v1
-      with:
-        vs-version: 2019  # 使用 Visual Studio 2019 或者其他版本
-        msbuild-architecture: x64  # 使用 x64 架构
-        include-workload: "Desktop development with C++"  # 确保安装 C++ 开发工具集
 
     - name: Configure CMake with vcpkg toolchain
       run: |
