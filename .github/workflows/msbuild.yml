@@ -25,20 +25,20 @@ jobs:
     - name: Install vcpkg
       run: |
         git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT}
-        ./vcpkg/bootstrap-vcpkg.sh  # For Linux/MacOS, use bootstrap-vcpkg.bat for Windows
+        ./vcpkg/bootstrap-vcpkg.bat  # 对于 Windows 使用 bootstrap-vcpkg.bat
 
-    # Step 2: Set up MSBuild
+    # Step 2: Install dependencies with vcpkg
+    - name: Install dependencies with vcpkg
+      run: |
+        ./vcpkg install webview2 fmt simpleini  # 安装 WebView2, fmt 和 simpleini
+        ./vcpkg integrate install
+
+    # Step 3: Set up MSBuild and Visual Studio 16.9
     - name: Set up MSBuild
       uses: microsoft/setup-msbuild@v2
       with:
-        vs-version: '16.9'  # Ensure you're using Visual Studio 16.9
+        vs-version: '16.9'  # 使用 Visual Studio 16.9 版本
     
-    # Step 3: Install dependencies with vcpkg
-    - name: Install dependencies with vcpkg
-      run: |
-        ./vcpkg install <your-package-list>  # List your dependencies here
-        ./vcpkg integrate install
-
     # Step 4: Configure CMake
     - name: Configure CMake
       run: |
