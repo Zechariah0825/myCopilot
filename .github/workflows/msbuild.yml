@@ -23,14 +23,7 @@ jobs:
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2  # 将 MSBuild 添加到 PATH
-      with:
-        vs-version: '2019'  # 指定 Visual Studio 版本为 2019
-
-    - name: Install Visual Studio Build Tools (if needed)
-      run: |
-        # 安装 Visual Studio Build Tools，确保安装 C++ 开发工具集
-        choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended --quiet --norestart"
-
+      
     - name: Set up vcpkg
       run: |
         # 克隆 vcpkg 仓库
