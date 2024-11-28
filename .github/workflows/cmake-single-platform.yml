@@ -1,4 +1,4 @@
-name: CMake Build with MinGW
+name: CMake Build with MinGW and vcpkg
 
 on:
   push:
@@ -13,24 +13,28 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-latest  # 使用 GitHub 提供的 Windows 环境
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install WebView2 Runtime
+    - name: Install MinGW and vcpkg
       run: |
-        # 使用 MSI 安装 WebView2 运行时
-        Invoke-WebRequest -Uri https://go.microsoft.com/fwlink/p/?LinkId=2124703 -OutFile webview2_installer.msi
-        Start-Process msiexec.exe -ArgumentList "/i", ".\webview2_installer.msi", "/quiet", "/norestart" -Wait
-
-    - name: Install MinGW
-      run: |
+        # 安装 MinGW
         choco install mingw
 
-    - name: Configure CMake with MinGW
-      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G "MinGW Makefiles"
+        # 克隆 vcpkg
+        git clone https://github.com/microsoft/vcpkg.git
+        cd vcpkg
+        # 初始化 vcpkg 并安装所需的库
+        ./bootstrap-vcpkg.bat
+        ./vcpkg install unofficial-webview2 fmt simpleini
+
+    - name: Configure CMake with MinGW and vcpkg
+      run: |
+        cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G "MinGW Makefiles" -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
 
     - name: Build the project with MinGW
-      run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }}
+      run: |
+        cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }}
