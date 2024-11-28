@@ -9,7 +9,7 @@ on:
 env:
   SOLUTION_FILE_PATH: .
   BUILD_CONFIGURATION: Release
-  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg  # 指定 VCPKG_ROOT 为 vcpkg 文件夹
 
 permissions:
   contents: read
@@ -21,17 +21,17 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Step 1: Set up vcpkg manually
+    # Step 1: Clone vcpkg repository
     - name: Install vcpkg
       run: |
-        git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT}
-        & "${VCPKG_ROOT}/bootstrap-vcpkg.bat"  # 使用 PowerShell 的调用符号 '&'
+        git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT}  # 克隆 vcpkg 仓库
+        & "${VCPKG_ROOT}\\bootstrap-vcpkg.bat"  # 使用双反斜杠调用 Windows 批处理文件
 
     # Step 2: Install dependencies with vcpkg
     - name: Install dependencies with vcpkg
       run: |
-        & "${VCPKG_ROOT}/vcpkg" install webview2 fmt simpleini  # 使用 '&' 来执行 vcpkg 命令
-        & "${VCPKG_ROOT}/vcpkg" integrate install
+        & "${VCPKG_ROOT}\\vcpkg" install webview2 fmt simpleini  # 安装 WebView2, fmt 和 simpleini
+        & "${VCPKG_ROOT}\\vcpkg" integrate install  # 集成 vcpkg
 
     # Step 3: Set up MSBuild and Visual Studio 16.9
     - name: Set up MSBuild
